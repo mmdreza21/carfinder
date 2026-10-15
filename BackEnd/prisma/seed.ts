@@ -27,15 +27,23 @@ const TRIMS = ["Base","Sport","Premium","Luxury","Performance","S Line","M Sport
 const TRANSMISSIONS = ["6-speed manual","7-speed DCT","8-speed automatic","9-speed automatic","10-speed automatic","Single-speed (EV)","6-speed automatic"];
 const DRIVETRAINS = ["RWD","FWD","AWD","4WD"];
 
-function imageUrl(brandSlug: string, modelSlug: string, brandName: string, modelName: string, seed: number): string {
+// Returns [heroUrl, ...gallery] — 3 to 6 unique images per car, rotated
+// through the model's image pool so every car looks distinct.
+function carImageSet(
+  brandSlug: string, modelSlug: string, brandName: string, modelName: string, seed: number,
+): { hero: string; all: string[] } {
   const key = `${brandSlug}/${modelSlug}`;
-  const list = carImages[key];
-  if (list && list.length > 0) {
-    // Deterministic but distinct index per car (seed already includes year+trim)
-    return list[seed % list.length];
+  const pool = carImages[key];
+  if (pool && pool.length > 0) {
+    const count = Math.min(3 + (seed % 4), pool.length);   // 3..6 images
+    const start = seed % pool.length;
+    const picked: string[] = [];
+    for (let i = 0; i < count; i++) picked.push(pool[(start + i) % pool.length]);
+    return { hero: picked[0], all: picked };
   }
   const q = encodeURIComponent(`${brandName},${modelName},car`);
-  return `https://loremflickr.com/800/600/${q}?lock=${seed}`;
+  const hero = `https://loremflickr.com/800/600/${q}?lock=${seed}`;
+  return { hero, all: [hero] };
 }
 
 interface Spec {
@@ -172,7 +180,7 @@ async function main() {
           const spec = buildSpec(seed, model.segment, model.bodyType, fuelOverride);
           const trim = pick(TRIMS, seed + t);
           const fullName = `${brandName} ${model.name} ${code} ${trim}`;
-          const img = imageUrl(model.brandSlug, model.slug, brandName, model.name, seed);
+          const imgs = carImageSet(model.brandSlug, model.slug, brandName, model.name, seed);
           if (carImages[`${model.brandSlug}/${model.slug}`]?.length) imageHit++;
           await prisma.car.create({
             data: {
@@ -192,7 +200,8 @@ async function main() {
               priceUsd: spec.priceUsd, priceEur: spec.priceEur,
               mileageKm: spec.mileageKm, condition: spec.condition, color: spec.color,
               vin: `VIN${seed.toString(36).toUpperCase().padStart(8, "0")}${carCount}`,
-              imageUrl: img,
+              imageUrl: imgs.hero,
+              imageUrls: imgs.all,
               funFact: funFact ?? null,
               description: `${fullName} — ${spec.horsepower} hp ${spec.fuelType.toLowerCase()} ${model.bodyType.toLowerCase()} from ${year}.`,
             },

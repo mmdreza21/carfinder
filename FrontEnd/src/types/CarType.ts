@@ -24,6 +24,7 @@ export interface Car {
   doors: number | null;
   weightKg: number | null;
   imageUrl: string | null;
+  imageUrls?: string[];
   funFact: string | null;
   description: string | null;
   // Postgres-only fields (populated by /api/car)

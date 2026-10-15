@@ -63,6 +63,7 @@ async function main() {
         doors: c.doors,
         weightKg: c.weightKg,
         imageUrl: c.imageUrl,
+        imageUrls: c.imageUrls,
         funFact: c.funFact,
         description: c.description,
       },

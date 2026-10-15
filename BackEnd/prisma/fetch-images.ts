@@ -8,10 +8,17 @@ const UA =
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 // ---------- generic HTTP helpers ----------
-async function fetchText(url: string, headers: Record<string, string> = {}): Promise<string | null> {
-  for (let attempt = 0; attempt < 3; attempt++) {
+async function fetchText(
+  url: string,
+  headers: Record<string, string> = {},
+  timeoutMs = 8000,
+): Promise<string | null> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
       const res = await fetch(url, {
+        signal: controller.signal,
         headers: {
           'User-Agent': UA,
           Accept: 'text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8',
@@ -19,13 +26,23 @@ async function fetchText(url: string, headers: Record<string, string> = {}): Pro
           ...headers,
         },
       });
+      clearTimeout(timer);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.text();
     } catch {
-      await sleep(500 * (attempt + 1));
+      clearTimeout(timer);
+      await sleep(400 * (attempt + 1));
     }
   }
   return null;
+}
+
+// Runs a promise but gives up after ms, so one slow source can't block everything.
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T | null> {
+  return Promise.race([
+    p,
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), ms)),
+  ]);
 }
 
 function uniq(arr: string[]): string[] {
@@ -264,26 +281,26 @@ async function collectForModel(
   // 1) Official press site (if configured for this brand)
   const press = PRESS_SITES[brandSlug];
   if (press) {
-    const urls = await press(modelName);
+    const urls = (await withTimeout(press(modelName), 12000)) ?? [];
     if (urls.length >= 3) return { urls: urls.slice(0, 25), source: `press:${brandSlug}` };
   }
 
   // 2) Bing image search
   try {
-    const urls = await bingImages(`${brandName} ${modelName} car`);
+    const urls = (await withTimeout(bingImages(`${brandName} ${modelName} car`), 15000)) ?? [];
     if (urls.length >= 3) return { urls: urls.slice(0, 25), source: 'bing' };
   } catch { /* fall through */ }
 
   // 3) DuckDuckGo image search
   try {
-    const urls = await ddgImages(`${brandName} ${modelName} car`);
+    const urls = (await withTimeout(ddgImages(`${brandName} ${modelName} car`), 15000)) ?? [];
     if (urls.length >= 3) return { urls: urls.slice(0, 25), source: 'ddg' };
   } catch { /* fall through */ }
 
   // 4) Wikimedia Commons categories
   const cats = COMMONS_CATEGORIES[key] ?? [`${brandName} ${modelName}`];
   for (const cat of cats) {
-    const urls = await commonsImages(cat);
+    const urls = (await withTimeout(commonsImages(cat), 12000)) ?? [];
     if (urls.length >= 3) return { urls: urls.slice(0, 30), source: `commons:${cat}` };
   }
 

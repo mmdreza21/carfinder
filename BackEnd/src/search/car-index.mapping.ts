@@ -39,6 +39,7 @@ export const carIndexMappings: any = {
     doors: { type: 'integer' },
     weightKg: { type: 'integer' },
     imageUrl: { type: 'keyword', index: false },
+    imageUrls: { type: 'keyword', index: false },
     funFact: { type: 'text' },
     description: { type: 'text' },
   },

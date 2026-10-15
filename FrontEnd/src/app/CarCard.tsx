@@ -1,7 +1,13 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { Badge, Box, Button, Card, Flex, Grid, Text } from "@radix-ui/themes";
-import { AiOutlineThunderbolt, AiOutlineDashboard, AiOutlineClockCircle, AiOutlineFire } from "react-icons/ai";
+import {
+  AiOutlineThunderbolt,
+  AiOutlineDashboard,
+  AiOutlineClockCircle,
+  AiOutlineFire,
+} from "react-icons/ai";
 import { Car } from "@/types/CarType";
 import CarDetailsDialog from "./CarDetailsDialog";
 
@@ -14,12 +20,22 @@ const fuelColor = (fuel: string | null) => {
   }
 };
 
-function Spec({ icon, label, value }: { icon: React.ReactNode; label: string; value: string | number | null | undefined }) {
+function Spec({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string | number | null | undefined;
+}) {
   return (
     <Flex direction="column" gap="0" align="start">
       <Flex align="center" gap="1" style={{ color: "var(--gray-9)" }}>
         {icon}
-        <Text size="1" color="gray" style={{ textTransform: "uppercase", letterSpacing: 0.4 }}>{label}</Text>
+        <Text size="1" color="gray" style={{ textTransform: "uppercase", letterSpacing: 0.4 }}>
+          {label}
+        </Text>
       </Flex>
       <Text size="3" weight="medium">{value ?? "—"}</Text>
     </Flex>
@@ -27,28 +43,97 @@ function Spec({ icon, label, value }: { icon: React.ReactNode; label: string; va
 }
 
 export default function CarCard({ car }: { car: Car }) {
+  const gallery = car.imageUrls?.length ? car.imageUrls : car.imageUrl ? [car.imageUrl] : [];
+  const [idx, setIdx] = useState(0);
+  const [hovering, setHovering] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Preload all images once so the flip is instant
+  useEffect(() => {
+    gallery.forEach((u) => {
+      const img = new Image();
+      img.src = u;
+    });
+  }, [gallery]);
+
+  useEffect(() => {
+    if (!hovering || gallery.length <= 1) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      return;
+    }
+    timerRef.current = setInterval(() => {
+      setIdx((i) => (i + 1) % gallery.length);
+    }, 900);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [hovering, gallery.length]);
+
+  const active = gallery[idx] ?? null;
+
   return (
-    <Card style={{ padding: 0, overflow: "hidden" }}>
-      <Box style={{ position: "relative", aspectRatio: "16 / 10", background: "var(--gray-3)" }}>
-        {car.imageUrl && (
+    <Card
+      style={{ padding: 0, overflow: "hidden" }}
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={() => { setHovering(false); setIdx(0); }}
+    >
+      <Box style={{ position: "relative", aspectRatio: "16 / 10", background: "var(--gray-3)", overflow: "hidden" }}>
+        {gallery.map((u, i) => (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={car.imageUrl}
+            key={u + i}
+            src={u}
             alt={car.fullName}
-            loading="lazy"
-            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+            loading={i === 0 ? "lazy" : "eager"}
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: "block",
+              opacity: i === idx ? 1 : 0,
+              transition: "opacity 300ms ease",
+            }}
           />
-        )}
+        ))}
+
         <Flex gap="1" style={{ position: "absolute", top: 10, right: 10 }}>
           {car.condition && (
             <Badge color="amber" variant="solid" radius="full">{car.condition}</Badge>
           )}
         </Flex>
+
         <Box style={{ position: "absolute", bottom: 10, left: 10 }}>
           <Badge color={fuelColor(car.fuelType)} variant="solid" radius="full">
             {car.fuelType ?? "—"}
           </Badge>
         </Box>
+
+        {/* Dots indicator — only show when there's more than one image */}
+        {gallery.length > 1 && (
+          <Flex
+            gap="1"
+            style={{
+              position: "absolute",
+              bottom: 12,
+              right: 12,
+            }}
+          >
+            {gallery.map((_, i) => (
+              <Box
+                key={i}
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: 999,
+                  background: i === idx ? "white" : "rgba(255,255,255,0.5)",
+                  transition: "background 200ms ease",
+                }}
+              />
+            ))}
+          </Flex>
+        )}
       </Box>
 
       <Box p="3">

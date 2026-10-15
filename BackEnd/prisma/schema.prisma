@@ -113,6 +113,7 @@ model Car {
   vin       String? @unique
 
   imageUrl    String?
+  imageUrls   String[]
   funFact     String?
   description String?
 

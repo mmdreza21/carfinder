@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Badge, Box, Button, Dialog, Flex, Grid, Heading, Text } from "@radix-ui/themes";
 import { Car } from "@/types/CarType";
 
@@ -17,30 +18,51 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 export default function CarDetailsDialog({ car }: Props) {
+  const gallery = car.imageUrls?.length ? car.imageUrls : car.imageUrl ? [car.imageUrl] : [];
+  const [active, setActive] = useState(0);
+  const activeUrl = gallery[active];
+
   return (
     <Dialog.Root>
       <Dialog.Trigger>
-        <Button size="1" variant="soft">Details</Button>
+        <Button size="2" variant="soft">Details</Button>
       </Dialog.Trigger>
 
-      <Dialog.Content maxWidth="800px">
+      <Dialog.Content maxWidth="900px">
         <Dialog.Title>{car.fullName}</Dialog.Title>
         <Dialog.Description size="2" color="gray" mb="3">
           {car.brandName} · {car.modelName} · {car.generationCode} · {car.year}
         </Dialog.Description>
 
-        {car.imageUrl && (
-          <Box
-            mb="4"
-            style={{ borderRadius: 8, overflow: "hidden", background: "var(--gray-3)" }}
-          >
+        {activeUrl && (
+          <Box mb="3" style={{ borderRadius: 8, overflow: "hidden", background: "var(--gray-3)" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={car.imageUrl}
+              src={activeUrl}
               alt={car.fullName}
-              style={{ width: "100%", height: 260, objectFit: "cover" }}
+              style={{ width: "100%", height: 340, objectFit: "cover", display: "block" }}
             />
           </Box>
+        )}
+
+        {gallery.length > 1 && (
+          <Flex gap="2" mb="4" wrap="wrap">
+            {gallery.map((u, i) => (
+              <button
+                key={u + i}
+                onClick={() => setActive(i)}
+                style={{
+                  padding: 0, border: i === active ? "2px solid var(--orange-9)" : "2px solid transparent",
+                  borderRadius: 6, overflow: "hidden", cursor: "pointer", background: "transparent",
+                  width: 72, height: 52,
+                }}
+                aria-label={`Image ${i + 1}`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={u} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              </button>
+            ))}
+          </Flex>
         )}
 
         <Flex gap="2" mb="4" wrap="wrap">
