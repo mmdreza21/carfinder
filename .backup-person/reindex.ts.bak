@@ -1,0 +1,63 @@
+import { PrismaClient } from '@prisma/client';
+import { Client } from '@elastic/elasticsearch';
+import { PERSON_INDEX, personIndexMapping } from '../src/search/person-index.mapping';
+
+const prisma = new PrismaClient();
+const es = new Client({ node: process.env.ELASTICSEARCH_URL || 'http://localhost:9200' });
+
+async function main() {
+    const exists = await es.indices.exists({ index: PERSON_INDEX });
+    if (exists) {
+        await es.indices.delete({ index: PERSON_INDEX });
+    }
+    await es.indices.create({
+        index: PERSON_INDEX,
+        mappings: personIndexMapping.mappings,
+    });
+
+    const people = await prisma.person.findMany();
+
+    const operations = people.flatMap((p) => [
+        { index: { _index: PERSON_INDEX, _id: p.id } },
+        {
+            id: p.id,
+            fullName: p.fullName,
+            firstName: p.firstName,
+            lastName: p.lastName,
+            jobTitle: p.jobTitle,
+            jobTitleRole: p.jobTitleRole,
+            industry: p.industry,
+            jobCompanyName: p.jobCompanyName,
+            jobCompanyIndustry: p.jobCompanyIndustry,
+            locationName: p.locationName,
+            locationCountry: p.locationCountry,
+            locationRegion: p.locationRegion,
+            locationLocality: p.locationLocality,
+            summary: p.summary,
+            skills: p.skills,
+            interests: p.interests,
+            linkedinConnections: p.linkedinConnections,
+            inferredYearsExperience: p.inferredYearsExperience,
+
+        },
+    ]);
+
+    const bulkResponse = await es.bulk({ refresh: true, operations });
+
+    if (bulkResponse.errors) {
+        const erroredItems = bulkResponse.items.filter((item: any) => item.index?.error);
+        console.error(`${erroredItems.length} documents failed to index`);
+        console.error(JSON.stringify(erroredItems.slice(0, 3), null, 2));
+    }
+
+    console.log(`Indexed ${people.length} people into '${PERSON_INDEX}'`);
+}
+
+main()
+    .catch((e) => {
+        console.error(e);
+        process.exit(1);
+    })
+    .finally(async () => {
+        await prisma.$disconnect();
+    });

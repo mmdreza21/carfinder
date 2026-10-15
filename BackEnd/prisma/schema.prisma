@@ -1,0 +1,135 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Brand {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  slug         String   @unique
+  country      String
+  foundedYear  Int?
+  headquarters String?
+  logoUrl      String?
+  description  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  models Model[]
+  cars   Car[]
+
+  @@index([country])
+  @@map("brands")
+}
+
+model Model {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String
+  bodyType  String?
+  segment   String?
+  brandId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  brand       Brand        @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  generations Generation[]
+  cars        Car[]
+
+  @@unique([brandId, slug])
+  @@index([brandId])
+  @@index([bodyType])
+  @@map("models")
+}
+
+model Generation {
+  id          String   @id @default(cuid())
+  name        String
+  code        String?
+  yearFrom    Int
+  yearTo      Int?
+  platform    String?
+  description String?
+  funFact     String?
+  modelId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  model Model @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  cars  Car[]
+
+  @@unique([modelId, name])
+  @@index([modelId])
+  @@index([yearFrom])
+  @@map("generations")
+}
+
+model Car {
+  id String @id @default(cuid())
+
+  brandId      String
+  modelId      String
+  generationId String?
+
+  fullName String
+  year     Int
+  trim     String?
+
+  bodyType String?
+  doors    Int?
+  seats    Int?
+
+  engineType          String?
+  engineDisplacementL Float?
+  cylinders           Int?
+  fuelType            String?
+  horsepower          Int?
+  torqueNm            Int?
+  transmission        String?
+  drivetrain          String?
+
+  zeroTo100Kmh Float?
+  topSpeedKph  Int?
+
+  lengthMm    Int?
+  widthMm     Int?
+  heightMm    Int?
+  wheelbaseMm Int?
+  weightKg    Int?
+
+  fuelConsumptionL100km Float?
+  co2Gkm                Int?
+  rangeKm               Int?
+
+  priceUsd  Int?
+  priceEur  Int?
+  mileageKm Int?
+  condition String?
+  color     String?
+  vin       String? @unique
+
+  imageUrl    String?
+  funFact     String?
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  brand      Brand       @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  model      Model       @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  generation Generation? @relation(fields: [generationId], references: [id], onDelete: SetNull)
+
+  @@index([brandId])
+  @@index([modelId])
+  @@index([generationId])
+  @@index([year])
+  @@index([fuelType])
+  @@index([bodyType])
+  @@index([priceUsd])
+  @@index([horsepower])
+  @@map("cars")
+}

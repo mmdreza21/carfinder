@@ -1,0 +1,118 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Person {
+  id String @id @default(cuid())
+
+  fullName      String?
+  firstName     String?
+  lastName      String?
+  middleName    String?
+  middleInitial String?
+  gender        String?
+
+  linkedinId       String? @unique
+  linkedinUrl      String?
+  linkedinUsername String?
+
+  facebookId       String?
+  facebookUrl      String?
+  facebookUsername String?
+
+  twitterUrl      String?
+  twitterUsername String?
+
+  githubUrl      String?
+  githubUsername String?
+
+  industry              String?
+  jobTitle              String?
+  jobTitleRole          String?
+  jobTitleSubRole       String?
+  jobTitleLevels        String[]
+  jobCompanyId          String?
+  jobCompanyName        String?
+  jobCompanyWebsite     String?
+  jobCompanySize        String?
+  jobCompanyFounded     Int?
+  jobCompanyIndustry    String?
+  jobCompanyLinkedinUrl String?
+  jobCompanyLinkedinId  String?
+  jobCompanyFacebookUrl String?
+  jobCompanyTwitterUrl  String?
+
+  jobCompanyLocationName          String?
+  jobCompanyLocationLocality      String?
+  jobCompanyLocationMetro         String?
+  jobCompanyLocationRegion        String?
+  jobCompanyLocationGeo           String?
+  jobCompanyLocationCountry       String?
+  jobCompanyLocationContinent     String?
+  jobCompanyLocationStreetAddress String?
+  jobCompanyLocationPostalCode    String?
+  jobCompanyLocationAddressLine2  String?
+
+  jobStartDate   String?
+  jobLastUpdated DateTime?
+  jobSummary     String?
+
+  locationName          String?
+  locationLocality      String?
+  locationMetro         String?
+  locationRegion        String?
+  locationCountry       String?
+  locationContinent     String?
+  locationGeo           String?
+  locationLastUpdated   DateTime?
+  locationStreetAddress String?
+  locationPostalCode    String?
+  locationAddressLine2  String?
+
+  linkedinConnections     Int?
+  inferredSalary          String?
+  inferredYearsExperience Float?
+
+  summary String?
+
+  interests       String[]
+  skills          String[]
+  locationNames   String[]
+  regions         String[]
+  countries       String[]
+  streetAddresses Json?
+
+  experience     Json?
+  education      Json?
+  emails         Json?
+  phoneNumbers   Json?
+  profiles       Json?
+  certifications Json?
+  languages      Json?
+  versionStatus  Json?
+
+  workEmail   String?
+  mobilePhone String?
+  birthYear   Int?
+  birthDate   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([jobTitle])
+  @@index([jobTitleRole])
+  @@index([industry])
+  @@index([jobCompanyId])
+  @@index([jobCompanyName])
+  @@index([jobCompanyIndustry])
+  @@index([locationCountry])
+  @@index([locationRegion])
+  @@index([locationLocality])
+  @@index([linkedinConnections])
+  @@index([inferredYearsExperience])
+}

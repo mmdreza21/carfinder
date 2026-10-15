@@ -1,0 +1,130 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  /* background: var(--background); */
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+  .site-nav {
+    background:
+      radial-gradient(circle at 94% 15%, rgb(251 207 232 / 0.8), transparent 16rem),
+      linear-gradient(110deg, #4c1d95, #7e22ce 52%, #a21caf);
+    box-shadow: 0 10px 28px rgb(88 28 135 / 0.2);
+  }
+
+  .brand-link {
+    @apply flex items-center gap-2 text-white no-underline transition-opacity hover:opacity-90;
+  }
+
+  .brand-mark {
+    @apply grid h-9 w-9 place-items-center rounded-xl bg-white/20 text-lg shadow-sm ring-1 ring-white/30;
+  }
+
+  .brand-subtitle {
+    @apply block text-white/65;
+  }
+
+  .nav-links {
+    @apply flex items-center gap-1 sm:gap-2;
+  }
+
+  .nav-link {
+    @apply rounded-full px-3 py-2 text-xs font-medium text-white/75 no-underline transition-all hover:bg-white/15 hover:text-white sm:text-sm;
+  }
+
+  .nav-link-active {
+    @apply bg-white text-purple-800 shadow-sm hover:bg-white hover:text-purple-800;
+  }
+
+  .nav-flower {
+    @apply hidden text-3xl text-pink-200/90 sm:block;
+  }
+
+  .person-dialog {
+    max-height: min(80vh, 760px);
+    overflow-y: auto;
+  }
+
+  .person-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .person-detail-field {
+    min-width: 0;
+    border: 1px solid var(--gray-a5);
+    border-radius: 0.75rem;
+    background: var(--gray-a2);
+    padding: 0.75rem;
+  }
+
+  .person-json {
+    max-height: 12rem;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 0.75rem;
+  }
+}
+
+
+/* Make the editor background dark */
+.CodeMirror {
+  background-color: #1a1a1a !important;
+  color: #e0e0e0 !important;
+}
+
+/* Make the editor's text area dark */
+.CodeMirror-scroll {
+  background-color: #1a1a1a !important;
+}
+
+/* Style the toolbar */
+.editor-toolbar {
+  background-color: #2d2d2d !important;
+  border-color: #404040 !important;
+}
+
+.editor-toolbar button {
+  color: #e0e0e0 !important;
+}
+
+.editor-toolbar button.active,
+.editor-toolbar button:hover {
+  background: #404040 !important;
+  border-color: #505050 !important;
+}
+
+/* Style the preview when in side-by-side mode */
+.CodeMirror-preview {
+  background-color: #1a1a1a !important;
+  color: #e0e0e0 !important;
+}
+
+/* Style the status bar */
+.editor-statusbar {
+  background-color: #2d2d2d !important;
+  color: #888 !important;
+  border-color: #404040 !important;
+}

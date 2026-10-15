@@ -1,0 +1,64 @@
+import { PrismaClient } from '@prisma/client';
+import fs from 'fs';
+import path from 'path';
+import csv from 'csv-parser';
+
+const prisma = new PrismaClient();
+
+async function main() {
+    const filePath = path.join(process.cwd(), 'prisma', 'data', 'data.csv');
+
+    const rows: any[] = [];
+
+    await new Promise<void>((resolve, reject) => {
+        fs.createReadStream(filePath)
+            .pipe(csv())
+            .on('data', (row) => rows.push(row))
+            .on('end', resolve)
+            .on('error', reject);
+    });
+
+    console.log(`Found ${rows.length} rows`);
+
+    let success = 0;
+    let failed = 0;
+
+    for (const row of rows) {
+        try {
+            await prisma.person.create({
+                data: {
+                    fullName: row.full_name || null,
+                    firstName: row.first_name || null,
+                    lastName: row.last_name || null,
+                    gender: row.gender || null,
+                    linkedinId: row.linkedin_id || null,
+                    linkedinUrl: row.linkedin_url || null,
+                    jobTitle: row.job_title || null,
+                    jobCompanyName: row.job_company_name || null,
+                    jobStartDate: row.job_start_date || null,
+                    industry: row.industry || null,
+                    locationName: row.location_name || null,
+                    locationCountry: row.location_country || null,
+                    locationRegion: row.location_region || null,
+                    locationLocality: row.location_locality || null,
+                    summary: row.summary || null,
+                    workEmail: row.work_email || null,
+                    mobilePhone: row.mobile_phone || null,
+                },
+            });
+
+            success++;
+        } catch (error) {
+            failed++;
+            console.error(`Failed row: ${row.linkedin_id || 'unknown'}`);
+        }
+    }
+
+    console.log(`Seed complete: ${success} succeeded, ${failed} failed`);
+}
+
+main()
+    .catch(console.error)
+    .finally(async () => {
+        await prisma.$disconnect();
+    });
